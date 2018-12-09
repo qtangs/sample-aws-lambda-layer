@@ -1,0 +1,39 @@
+service: sample-service       # Name of the service, which is used as a prefix to all function names. TODO: Update to your custom name.
+
+frameworkVersion: ">=1.34.0"  # Layers are supported from version 1.34
+
+provider:
+  name: aws                   # Assuming this is for AWS Lambda.
+  stage: dev                  # Name of the stage, typically either dev/staging/prod (or production), this is also added to all function names. TODO: Update to your custom name.
+  profile: some-aws-profile   # Name of the pre-configured AWS profile that is founnd in ~/.aws/confidentials.  TODO: Update to your profile.
+  region: some-region         # Name of the region to deploy all functions to. TODO: Update to your custom region.
+  runtime: python3.6          # AWS Lambda runtime
+
+# AWS Lambda Layers
+layers:
+  Pandas:
+    path: layers/pandas                         # required, path to layer contents on disk
+    name: ${self:service}-Python36-Pandas23x    # optional, Deployed Lambda layer name
+    description: Pandas 0.23.x with Python 3.6  # optional, Description to publish to AWS
+    compatibleRuntimes:                         # optional, a list of runtimes this layer is compatible with
+      - python3.6
+    licenseInfo: MIT License                    # optional, a string specifying license information.  TODO: Update to your preferred license.
+    allowedAccounts:                            # optional, a list of AWS account IDs allowed to access this layer. * for all. TODO: Update to your preferred accounts.
+      - '*'
+
+# AWS Lambda Functions
+functions:
+  DataAnalysis:                                 # This results in function name: ${self:service}-${self:provider.stage}-DataAnalysis, i.e., sample-service-dev-DataAnalysis
+    handler: data_analysis.handler
+    layers:
+      - arn:aws:lambda:${self:provider.region}:468957933125:layer:AWSLambda-Python36-SciPy1x:2
+      - {Ref: PandasLambdaLayer}                # Note the reference name is always the CamelCase version of the layer name with LambdaLayer suffix.
+
+# Custom configuration of all resources including Lambda Function, IAM Role, S3 Bucket, ...
+resources:
+  Resources:
+    DataAnalysisLambdaFunction:                 # Note the reference name is always the CamelCase version of the layer name with LambdaLayer suffix.
+      Type: AWS::Lambda::Function
+      Properties:
+        MemorySize: 128
+        Timeout: 5
