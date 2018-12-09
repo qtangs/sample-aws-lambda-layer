@@ -19,7 +19,7 @@ Complete guide: https://medium.com/@qtangs/creating-new-aws-lambda-layer-for-pyt
 
 # Package
 
-    pushd layers/pandas && ./get_layer_packages.sh && popd
+    pushd layers/pandas && chmod +x get_layer_packages.sh && ./get_layer_packages.sh && popd
     serverless package
 
 # Deploy
