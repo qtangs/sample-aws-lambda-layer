@@ -1,0 +1,267 @@
+{
+  "service": {
+    "service": "sample-service",
+    "serviceObject": {
+      "name": "sample-service"
+    },
+    "provider": {
+      "stage": "dev",
+      "region": "some-region",
+      "variableSyntax": "\\${([ ~:a-zA-Z0-9._'\",\\-\\/\\(\\)]+?)}",
+      "name": "aws",
+      "profile": "some-aws-profile",
+      "runtime": "python3.6",
+      "versionFunctions": true,
+      "remoteFunctionData": null,
+      "compiledCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket"
+          },
+          "DataAnalysisLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/sample-service-dev-DataAnalysis"
+            }
+          },
+          "IamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "dev",
+                        "sample-service",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/sample-service-dev-DataAnalysis:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/sample-service-dev-DataAnalysis:*:*"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "sample-service",
+                    "dev",
+                    "some-region",
+                    "lambdaRole"
+                  ]
+                ]
+              }
+            }
+          },
+          "PandasLambdaLayer": {
+            "Type": "AWS::Lambda::LayerVersion",
+            "Properties": {
+              "Content": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/sample-service/dev/1544319484329-2018-12-09T01:38:04.329Z/Pandas.zip"
+              },
+              "LayerName": "sample-service-Python36-Pandas23x",
+              "Description": "Pandas 0.23.x with Python 3.6",
+              "LicenseInfo": "MIT License",
+              "CompatibleRuntimes": [
+                "python3.6"
+              ]
+            }
+          },
+          "PandasWildLambdaLayerPermission": {
+            "Type": "AWS::Lambda::LayerVersionPermission",
+            "Properties": {
+              "Action": "lambda:GetLayerVersion",
+              "LayerVersionArn": {
+                "Ref": "PandasLambdaLayer"
+              },
+              "Principal": "*"
+            }
+          },
+          "DataAnalysisLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/sample-service/dev/1544319484329-2018-12-09T01:38:04.329Z/DataAnalysis.zip"
+              },
+              "FunctionName": "sample-service-dev-DataAnalysis",
+              "Handler": "data_analysis.handler",
+              "MemorySize": 128,
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              },
+              "Runtime": "python3.6",
+              "Timeout": 5,
+              "Layers": [
+                "arn:aws:lambda:some-region:468957933125:layer:AWSLambda-Python36-SciPy1x:2",
+                {
+                  "Ref": "PandasLambdaLayer"
+                }
+              ]
+            },
+            "DependsOn": [
+              "DataAnalysisLogGroup",
+              "IamRoleLambdaExecution"
+            ]
+          },
+          "DataAnalysisLambdaVersion0OAtCqHt0Mjdn4TkdOlmvKNzqPipVUe5Aed3sFrhU": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "DataAnalysisLambdaFunction"
+              },
+              "CodeSha256": "AsYuGBy29cdKkD8bTIYWJZHLnT2JKao30tEsKDXgg/0="
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            }
+          },
+          "PandasLambdaLayerQualifiedArn": {
+            "Description": "Current Lambda layer version",
+            "Value": {
+              "Ref": "PandasLambdaLayer"
+            }
+          },
+          "DataAnalysisLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "DataAnalysisLambdaVersion0OAtCqHt0Mjdn4TkdOlmvKNzqPipVUe5Aed3sFrhU"
+            }
+          }
+        }
+      },
+      "coreCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket"
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            }
+          }
+        }
+      },
+      "vpc": {}
+    },
+    "pluginsData": {},
+    "functions": {
+      "DataAnalysis": {
+        "handler": "data_analysis.handler",
+        "layers": [
+          "arn:aws:lambda:some-region:468957933125:layer:AWSLambda-Python36-SciPy1x:2",
+          {
+            "Ref": "PandasLambdaLayer"
+          }
+        ],
+        "events": [],
+        "name": "sample-service-dev-DataAnalysis",
+        "package": {
+          "artifact": "/Users/anhquy/Dropbox/Projects/sample-aws-lambda-layer/.serverless/DataAnalysis.zip"
+        },
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "python3.6",
+        "vpc": {}
+      }
+    },
+    "resources": {
+      "Resources": {
+        "DataAnalysisLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "MemorySize": 128,
+            "Timeout": 5
+          }
+        }
+      },
+      "Outputs": {}
+    },
+    "layers": {
+      "Pandas": {
+        "path": "layers/pandas",
+        "name": "sample-service-Python36-Pandas23x",
+        "description": "Pandas 0.23.x with Python 3.6",
+        "compatibleRuntimes": [
+          "python3.6"
+        ],
+        "licenseInfo": "MIT License",
+        "allowedAccounts": [
+          "*"
+        ],
+        "package": {
+          "artifact": "/Users/anhquy/Dropbox/Projects/sample-aws-lambda-layer/.serverless/Pandas.zip"
+        }
+      }
+    }
+  },
+  "package": {
+    "individually": true,
+    "artifactDirectoryName": "serverless/sample-service/dev/1544319484329-2018-12-09T01:38:04.329Z",
+    "artifact": ""
+  }
+}

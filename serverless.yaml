@@ -21,6 +21,9 @@ layers:
     allowedAccounts:                            # optional, a list of AWS account IDs allowed to access this layer. * for all. TODO: Update to your preferred accounts.
       - '*'
 
+package:
+  individually: true
+
 # AWS Lambda Functions
 functions:
   DataAnalysis:                                 # This results in function name: ${self:service}-${self:provider.stage}-DataAnalysis, i.e., sample-service-dev-DataAnalysis
